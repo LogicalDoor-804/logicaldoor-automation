@@ -68,15 +68,18 @@ let lastSpeedSpoken = 0;
 let recognition;
 let mqttClient;
 
-// MQTT Global Configuration
+// MQTT Global Configuration for Secure WebSockets
 const MQTT_BROKER = "broker.hivemq.com";
-const MQTT_PORT = 8000; // WebSockets port for Browser
+const MQTT_PORT = 8084; // Secure WebSockets (WSS) Port for HiveMQ
+const MQTT_PATH = "/mqtt"; // Secure WebSocket path
 const MQTT_TOPIC_CMD = "logicaldoor/bike/cmd";
 
 // 1. MQTT Web Connection Logic
 function initMQTT() {
   let clientId = "WebClient-Logicaldoor-" + Math.floor(Math.random() * 10000);
-  mqttClient = new Paho.MQTT.Client(MQTT_BROKER, Number(MQTT_PORT), clientId);
+  
+  // Paho.MQTT.Client setup with path for Secure WebSockets
+  mqttClient = new Paho.MQTT.Client(MQTT_BROKER, Number(MQTT_PORT), MQTT_PATH, clientId);
 
   mqttClient.onConnectionLost = function (responseObject) {
     document.getElementById("st").innerText = "RECONNECTING CLOUD...";
@@ -96,9 +99,11 @@ function initMQTT() {
     onFailure: function (message) {
       document.getElementById("st").innerText = "CLOUD ERROR";
       document.getElementById("st").style.color = "var(--primary)";
+      console.log("MQTT Fail: ", message.errorMessage);
       setTimeout(initMQTT, 5000);
     },
-    useSSL: false
+    useSSL: true, // MUST be true for HTTPS websites like GitHub Pages
+    timeout: 3
   });
 }
 
@@ -264,7 +269,7 @@ window.onload = function() {
   <div class="telemetry-grid">
     <div class="tel-card" style="grid-column: span 2;">
       <div class="tel-label" style="color:var(--accent-cyan)">Global Server Route</div>
-      <div class="tel-val" id="rssi_val" style="color:#00f0ff; font-family:monospace; font-size: 14px;">broker.hivemq.com</div>
+      <div class="tel-val" id="rssi_val" style="color:#00f0ff; font-family:monospace; font-size: 14px;">broker.hivemq.com (Secure)</div>
     </div>
     <div class="tel-card" style="grid-column: span 2;">
       <div class="tel-label">Live Telematics Location</div>
